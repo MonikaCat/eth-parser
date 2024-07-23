@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"strings"
 
 	"github.com/MonikaCat/eth-parser/database"
@@ -14,6 +13,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
+var USDCAddress = common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 
 func (n *Node) GetTransaction(tx *ethtypes.Transaction, db database.Database) types.Transaction {
 
@@ -35,6 +35,7 @@ func (n *Node) GetTransaction(tx *ethtypes.Transaction, db database.Database) ty
 	fmt.Printf("\n TRANSACTION DETAILS %v \n", transaction)
 	fmt.Printf("\n IS PENDING %v \n", isPending)
 
+	return types.Transaction{}
 }
 
 func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.Transaction, db database.Database) (types.Transaction, error) {
@@ -53,7 +54,7 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 
 		data := transaction.Data()[10:]
 		transferTo.SetBytes(data[:32])
-		value := new(big.Int).SetBytes(data[32:])
+		// value := new(big.Int).SetBytes(data[32:])
 
 		// parse the sender
 		txFrom, err := n.parseSender(transaction)
@@ -61,7 +62,7 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 			return types.Transaction{}, fmt.Errorf("error while parsing sender: %v", err)
 		}
 
-		accessListJson, err := json.Marshal(transaction.AccessList())
+		accessListJSON, err := json.Marshal(transaction.AccessList())
 		if err != nil {
 			fmt.Errorf("error marshalling logsBloom: %v", err)
 		}
@@ -73,26 +74,26 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 		}
 
 		txDetails := types.NewTransaction(
-			blockNumber,
+			string(blockNumber),
 			txReceipt.BlockHash.String(),
 			txFrom.String(),
 			transferTo.String(),
 			transaction.Hash().String(),
-			txReceipt.TransactionIndex,
-			value.String(),
-			transaction.Type(),
-			transaction.ChainId().String(),
-			transaction.Gas(),
-			transaction.GasPrice().Uint64(),
-			transaction.GasFeeCap().Uint64(),
-			transaction.GasTipCap().Uint64(),
+			Uint64ToHex(uint64(txReceipt.TransactionIndex)),
+			BigIntToHex(transaction.Value()),
+			Uint64ToHex(uint64(transaction.Type())),
+			BigIntToHex(transaction.ChainId()),
+			Uint64ToHex(transaction.Gas()),
+			BigIntToHex(transaction.GasPrice()),
+			BigIntToHex(transaction.GasFeeCap()),
+			BigIntToHex(transaction.GasTipCap()),
 			hex.EncodeToString(transaction.Data()),
-			transaction.Nonce(),
-			string(accessListJson),
-			v.String(),
-			r.String(),
-			s.String(),
-			string(yParity),
+			Uint64ToHex(transaction.Nonce()),
+			string(accessListJSON),
+			BigIntToHex(v),
+			BigIntToHex(r),
+			BigIntToHex(s),
+			Uint64ToHex(uint64(rune(yParity))),
 		)
 
 		err = db.SaveTransaction(txDetails)
