@@ -2,7 +2,11 @@ module github.com/MonikaCat/eth-parser
 
 go 1.22.4
 
-require github.com/ethereum/go-ethereum v1.14.7
+require (
+	github.com/ethereum/go-ethereum v1.14.7
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/mattn/go-sqlite3 v1.14.22
+)
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect

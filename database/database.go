@@ -1,16 +1,17 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type Database struct {
-	SQL *sql.DB
+	SQL *sqlx.DB
 }
 
 func ConnectToDatabase(cfg DatabaseConfig) (*Database, error) {
-	db, err := sql.Open("sqlite3", cfg.DNS)
+	db, err := sqlx.Open("sqlite3", cfg.DNS)
 	if err != nil {
 		return nil, fmt.Errorf("error while connecting to the database: %v", err)
 	}
