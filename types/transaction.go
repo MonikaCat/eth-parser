@@ -10,7 +10,7 @@ type Transaction struct {
 	TransactionIndex     string `json:"transaction_index" db:"transaction_index"`
 	Value                string `json:"tx_value" db:"tx_value"`
 	Type                 string `json:"tx_type" db:"tx_type"`
-	ChainId              string `json:"chain_id" db:"chain_id"`
+	ChainID              string `json:"chain_id" db:"chain_id"`
 	Gas                  string `json:"gas" db:"gas"`
 	GasPrice             string `json:"gas_price" db:"gas_price"`
 	MaxFeePerGas         string `json:"max_fee_per_gas" db:"max_fee_per_gas"`
@@ -27,7 +27,7 @@ type Transaction struct {
 // NewTransaction creates a new Transaction instance
 func NewTransaction(
 	blockNumber, blockHash, from, to, transactionHash,
-	transactionIndex, value, txType, chainId,
+	transactionIndex, value, txType, chainID,
 	gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas,
 	inputData, nonce, accessList,
 	v, r, s, yParity string,
@@ -41,7 +41,7 @@ func NewTransaction(
 		TransactionIndex:     transactionIndex,
 		Value:                value,
 		Type:                 txType,
-		ChainId:              chainId,
+		ChainID:              chainID,
 		Gas:                  gas,
 		GasPrice:             gasPrice,
 		MaxFeePerGas:         maxFeePerGas,

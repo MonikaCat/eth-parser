@@ -12,13 +12,13 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
-// GetBlock queries block by number 
+// GetBlock queries block by number
 // it returns parsed block details, transactions and error
 func (n *Node) GetBlock(blockNumber big.Int) (types.Block, ethtypes.Transactions, error) {
 
 	block, err := n.client.BlockByNumber(context.Background(), &blockNumber)
 	if err != nil {
-		return types.Block{}, ethtypes.Transactions{}, fmt.Errorf("error while getting block %d: error: %v ", blockNumber, err)
+		return types.Block{}, ethtypes.Transactions{}, fmt.Errorf("error while getting block %v: error: %v ", blockNumber, err)
 	}
 
 	blockDetails, txs, err := n.ParseBlockDetails(block)
@@ -29,11 +29,11 @@ func (n *Node) GetBlock(blockNumber big.Int) (types.Block, ethtypes.Transactions
 	return blockDetails, txs, nil
 }
 
-// ParseBlockDetails parses block details 
+// ParseBlockDetails parses block details
 // it returns block details, transactions and error
 func (n *Node) ParseBlockDetails(block *ethtypes.Block) (types.Block, ethtypes.Transactions, error) {
 
-	logsBloomJson, err := json.Marshal(block.Bloom())
+	logsBloomJSON, err := json.Marshal(block.Bloom())
 	if err != nil {
 		return types.Block{}, ethtypes.Transactions{}, fmt.Errorf("error marshalling logsBloom: %v", err)
 	}
@@ -49,7 +49,7 @@ func (n *Node) ParseBlockDetails(block *ethtypes.Block) (types.Block, ethtypes.T
 		ExtraData:             hex.EncodeToString(block.Extra()),
 		GasLimit:              block.GasLimit(),
 		GasUsed:               block.GasUsed(),
-		LogsBloom:             string(logsBloomJson),
+		LogsBloom:             string(logsBloomJSON),
 		MixHash:               block.MixDigest().String(),
 		Nonce:                 block.Nonce(),
 		ParentBeaconBlockRoot: block.BeaconRoot().String(),

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MonikaCat/eth-parser/database"
 	"github.com/MonikaCat/eth-parser/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -16,7 +15,7 @@ import (
 var USDCAddress = common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 
 // GetTransaction queries transaction by hash and parse it's details
-func (n *Node) GetTransaction(tx *ethtypes.Transaction, db database.Database) (types.Transaction, error) {
+func (n *Node) GetTransaction(tx *ethtypes.Transaction) (types.Transaction, error) {
 
 	transaction, isPending, err := n.client.TransactionByHash(context.Background(), tx.Hash())
 
@@ -25,7 +24,7 @@ func (n *Node) GetTransaction(tx *ethtypes.Transaction, db database.Database) (t
 	}
 
 	if !isPending {
-		usdcTransferTx, err := n.ParseTransactionDetails(1, transaction, db)
+		usdcTransferTx, err := n.ParseTransactionDetails(1, transaction)
 		if err != nil {
 			return types.Transaction{}, fmt.Errorf("error while parsing transaction details: %v", err)
 		}
@@ -40,7 +39,7 @@ func (n *Node) GetTransaction(tx *ethtypes.Transaction, db database.Database) (t
 }
 
 // ParseTransactionDetails parses transaction details
-func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.Transaction, db database.Database) (types.Transaction, error) {
+func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.Transaction) (types.Transaction, error) {
 
 	if transaction.To() == nil || strings.ToLower(transaction.To().Hex()) != USDCAddress.Hex() {
 		return types.Transaction{}, nil
@@ -48,7 +47,7 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 
 	txReceipt, err := n.client.TransactionReceipt(n.ctx, transaction.Hash())
 	if err != nil {
-		fmt.Errorf("error while getting transaction receipt: %v", err)
+		return types.Transaction{}, fmt.Errorf("error while getting transaction receipt: %v", err)
 	}
 
 	if len(transaction.Data()) >= 10 && string(transaction.Data()[:10]) == "0xa9059cbb" {
@@ -66,7 +65,7 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 
 		accessListJSON, err := json.Marshal(transaction.AccessList())
 		if err != nil {
-			fmt.Errorf("error marshalling logsBloom: %v", err)
+			return types.Transaction{}, fmt.Errorf("error marshalling logsBloom: %v", err)
 		}
 
 		v, r, s := transaction.RawSignatureValues()
@@ -76,7 +75,7 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 		}
 
 		txDetails := types.NewTransaction(
-			string(blockNumber),
+			fmt.Sprint(blockNumber),
 			txReceipt.BlockHash.String(),
 			txFrom.String(),
 			transferTo.String(),

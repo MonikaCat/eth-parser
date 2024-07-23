@@ -38,7 +38,7 @@ func InitCmd(cfg *InitConfig) *cobra.Command {
 			}
 
 			// create the default configuration
-			// when we finally have direcotry and config file created
+			// when we finally have directory and config file created
 			yamlCfg := cfg.GetConfigCreator()(cmd)
 			// write the configuration into config.yaml file
 			return CreateCfgFile(yamlCfg, cfgFilePath)

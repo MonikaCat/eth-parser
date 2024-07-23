@@ -18,7 +18,7 @@ func ParseCmd(cfg *config.Config, appName string) *cobra.Command {
 		Short:   "Parse USDC transfer transactions for a given block number",
 		Args:    cobra.ExactArgs(1),
 		PreRunE: config.GetConfigPreRunE(cfg, appName),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
 
 			blockHeight, err := strconv.ParseInt(args[0], 10, 64)
 			if err != nil {
@@ -50,7 +50,7 @@ func parse(cfg *config.Config, blockHeight int64) error {
 	}
 
 	for _, tx := range txs {
-		tx, err := parser.Node.GetTransaction(tx, *parser.Database)
+		tx, err := parser.Node.GetTransaction(tx)
 		if err != nil {
 			return fmt.Errorf("error while getting transaction: %v", err)
 		}
