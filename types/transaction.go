@@ -1,33 +1,33 @@
 package types
 
 type Transaction struct {
-	BlockNumber          int64  `json:"block_number"`
-	BlockHash            string `json:"block_hash"`
-	From                 string `json:"from"`
-	To                   string `json:"to"`
-	TransactionHash      string `json:"transaction_hash"`
-	TransactionIndex     uint   `json:"transaction_index"`
-	Value                string `json:"value"`
-	Type                 uint8  `json:"type"`
-	ChainId              string `json:"chain_id"`
-	Gas                  uint64 `json:"gas"`
-	GasPrice             uint64 `json:"gas_price"`
-	MaxFeePerGas         uint64 `json:"max_fee_per_gas"`
-	MaxPriorityFeePerGas uint64 `json:"max_priority_fee_per_gas"`
-	InputData            string `json:"input_data"`
-	Nonce                uint64 `json:"nonce"`
-	AccessList           string `json:"access_list"`
-	V                    string `json:"v"`
-	R                    string `json:"r"`
-	S                    string `json:"s"`
-	YPairity             string `json:"y_parity"`
+	BlockNumber          string `json:"block_number" db:"block_number"`
+	BlockHash            string `json:"block_hash" db:"block_hash"`
+	From                 string `json:"tx_from" db:"tx_from"`
+	To                   string `json:"tx_to" db:"tx_to"`
+	TransactionHash      string `json:"transaction_hash" db:"transaction_hash"`
+	TransactionIndex     string `json:"transaction_index" db:"transaction_index"`
+	Value                string `json:"tx_value" db:"tx_value"`
+	Type                 string `json:"tx_type" db:"tx_type"`
+	ChainId              string `json:"chain_id" db:"chain_id"`
+	Gas                  string `json:"gas" db:"gas"`
+	GasPrice             string `json:"gas_price" db:"gas_price"`
+	MaxFeePerGas         string `json:"max_fee_per_gas" db:"max_fee_per_gas"`
+	MaxPriorityFeePerGas string `json:"max_priority_fee_per_gas" db:"max_priority_fee_per_gas"`
+	InputData            string `json:"input_data" db:"input_data"`
+	Nonce                string `json:"nonce" db:"nonce"`
+	AccessList           string `json:"access_list" db:"access_list"`
+	V                    string `json:"v" db:"v"`
+	R                    string `json:"r" db:"r"`
+	S                    string `json:"s" db:"s"`
+	YPairity             string `json:"y_parity" db:"y_parity"`
 }
 
 func NewTransaction(
-	blockNumber int64, blockHash, from, to, transactionHash string,
-	transactionIndex uint, value string, txType uint8, chainId string,
-	gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas uint64,
-	inputData string, nonce uint64, accessList string,
+	blockNumber, blockHash, from, to, transactionHash,
+	transactionIndex, value, txType, chainId,
+	gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas,
+	inputData, nonce, accessList,
 	v, r, s, yParity string,
 ) Transaction {
 	return Transaction{
