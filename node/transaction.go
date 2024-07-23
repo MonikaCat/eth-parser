@@ -15,6 +15,7 @@ import (
 
 var USDCAddress = common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 
+// GetTransaction queries transaction by hash and parse it's details
 func (n *Node) GetTransaction(tx *ethtypes.Transaction, db database.Database) types.Transaction {
 
 	transaction, isPending, err := n.client.TransactionByHash(context.Background(), tx.Hash())
@@ -38,6 +39,7 @@ func (n *Node) GetTransaction(tx *ethtypes.Transaction, db database.Database) ty
 	return types.Transaction{}
 }
 
+// ParseTransactionDetails parses transaction details
 func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.Transaction, db database.Database) (types.Transaction, error) {
 
 	if transaction.To() == nil || strings.ToLower(transaction.To().Hex()) != USDCAddress.Hex() {

@@ -7,6 +7,7 @@ import (
 	"github.com/MonikaCat/eth-parser/types"
 )
 
+// SaveTransaction saves a transaction to the database
 func (db *Database) SaveTransaction(tx types.Transaction) error {
 	txQuery, err := os.ReadFile("database/sql/insert_transaction.sql")
 	if err != nil {

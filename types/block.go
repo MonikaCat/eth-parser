@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Block represents an ethereum block
 type Block struct {
 	BlockNumber           int64     `json:"block_number"`
 	BlockHash             string    `json:"block_hash"`
@@ -29,6 +30,7 @@ type Block struct {
 	TotalDifficulty       string    `json:"total_difficulty"`
 }
 
+// NewBlock creates a new Block instance
 func NewBlock(blockNumber int64, blockHash,
 	miner string, baseFeePerGas *big.Int, blobGasUsed, difficulty uint64,
 	excessBlobGas uint64, extraData string, gasLimit, gasUsed uint64,

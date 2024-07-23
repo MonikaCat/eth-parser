@@ -8,6 +8,7 @@ import (
 	_ "github.com/mattn/go-sqlite3" // sqlite3 driver
 )
 
+// SaveBlock saves a block to the database
 func (db *Database) SaveBlock(block types.Block) error {
 	blockQuery, err := os.ReadFile("database/sql/insert_block.sql")
 	if err != nil {

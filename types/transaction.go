@@ -1,5 +1,6 @@
 package types
 
+// Transaction represents an ethereum transaction
 type Transaction struct {
 	BlockNumber          string `json:"block_number" db:"block_number"`
 	BlockHash            string `json:"block_hash" db:"block_hash"`
@@ -23,6 +24,7 @@ type Transaction struct {
 	YPairity             string `json:"y_parity" db:"y_parity"`
 }
 
+// NewTransaction creates a new Transaction instance
 func NewTransaction(
 	blockNumber, blockHash, from, to, transactionHash,
 	transactionIndex, value, txType, chainId,

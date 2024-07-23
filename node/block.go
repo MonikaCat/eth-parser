@@ -12,6 +12,8 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
+// GetBlock queries block by number 
+// it returns parsed block details, transactions and error
 func (n *Node) GetBlock(blockNumber big.Int) (types.Block, ethtypes.Transactions, error) {
 
 	block, err := n.client.BlockByNumber(context.Background(), &blockNumber)
@@ -27,6 +29,8 @@ func (n *Node) GetBlock(blockNumber big.Int) (types.Block, ethtypes.Transactions
 	return blockDetails, txs, nil
 }
 
+// ParseBlockDetails parses block details 
+// it returns block details, transactions and error
 func (n *Node) ParseBlockDetails(block *ethtypes.Block) (types.Block, ethtypes.Transactions, error) {
 
 	logsBloomJson, err := json.Marshal(block.Bloom())
