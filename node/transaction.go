@@ -8,14 +8,14 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/MonikaCat/eth-parser/database"
 	"github.com/MonikaCat/eth-parser/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
-var USDCAddress = common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 
-func (n *Node) GetTransaction(tx *ethtypes.Transaction) types.Transaction {
+func (n *Node) GetTransaction(tx *ethtypes.Transaction, db database.Database) types.Transaction {
 
 	transaction, isPending, err := n.client.TransactionByHash(context.Background(), tx.Hash())
 
@@ -24,7 +24,7 @@ func (n *Node) GetTransaction(tx *ethtypes.Transaction) types.Transaction {
 	}
 
 	if !isPending {
-		usdcTransferTx, err := n.ParseTransactionDetails(1, transaction)
+		usdcTransferTx, err := n.ParseTransactionDetails(1, transaction, db)
 		if err != nil {
 			fmt.Println("error while parsing transaction details: %v", err)
 		}
@@ -37,7 +37,7 @@ func (n *Node) GetTransaction(tx *ethtypes.Transaction) types.Transaction {
 
 }
 
-func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.Transaction) (types.Transaction, error) {
+func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.Transaction, db database.Database) (types.Transaction, error) {
 
 	if transaction.To() == nil || strings.ToLower(transaction.To().Hex()) != USDCAddress.Hex() {
 		return types.Transaction{}, nil
@@ -55,9 +55,10 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 		transferTo.SetBytes(data[:32])
 		value := new(big.Int).SetBytes(data[32:])
 
-		txFrom, err := ethtypes.Sender(ethtypes.NewEIP155Signer(transaction.ChainId()), transaction)
+		// parse the sender
+		txFrom, err := n.parseSender(transaction)
 		if err != nil {
-			fmt.Errorf("error while getting transaction sender: %v", err)
+			return types.Transaction{}, fmt.Errorf("error while parsing sender: %v", err)
 		}
 
 		accessListJson, err := json.Marshal(transaction.AccessList())
@@ -71,31 +72,77 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 			yParity = int(v.Uint64() % 2)
 		}
 
-		txDetails := types.Transaction{
-			BlockNumber:          blockNumber,
-			BlockHash:            txReceipt.BlockHash.String(),
-			From:                 txFrom.String(),
-			To:                   transferTo.String(),
-			TransactionHash:      transaction.Hash().String(),
-			TransactionIndex:     txReceipt.TransactionIndex,
-			Value:                value.String(),
-			Type:                 transaction.Type(),
-			ChainId:              transaction.ChainId().String(),
-			Gas:                  transaction.Gas(),
-			GasPrice:             transaction.GasPrice().Uint64(),
-			MaxFeePerGas:         transaction.GasFeeCap().Uint64(),
-			MaxPriorityFeePerGas: transaction.GasTipCap().Uint64(),
-			InputData:            hex.EncodeToString(transaction.Data()),
-			Nonce:                transaction.Nonce(),
-			AccessList:           string(accessListJson),
-			V:                    v.String(),
-			R:                    r.String(),
-			S:                    s.String(),
-			YPairity:             string(yParity),
+		txDetails := types.NewTransaction(
+			blockNumber,
+			txReceipt.BlockHash.String(),
+			txFrom.String(),
+			transferTo.String(),
+			transaction.Hash().String(),
+			txReceipt.TransactionIndex,
+			value.String(),
+			transaction.Type(),
+			transaction.ChainId().String(),
+			transaction.Gas(),
+			transaction.GasPrice().Uint64(),
+			transaction.GasFeeCap().Uint64(),
+			transaction.GasTipCap().Uint64(),
+			hex.EncodeToString(transaction.Data()),
+			transaction.Nonce(),
+			string(accessListJson),
+			v.String(),
+			r.String(),
+			s.String(),
+			string(yParity),
+		)
+
+		err = db.SaveTransaction(txDetails)
+		if err != nil {
+			fmt.Errorf("error while saving transaction: %v", err)
 		}
+
 		return txDetails, nil
 
 	}
 
 	return types.Transaction{}, nil
+}
+
+// parseSender parses the sender of a transaction, depending on the tx type
+func (n *Node) parseSender(transaction *ethtypes.Transaction) (common.Address, error) {
+	chainID, err := n.client.NetworkID(n.ctx)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("error while getting chain id: %v", err)
+	}
+
+	var sender common.Address
+	switch transaction.Type() {
+	case ethtypes.LegacyTxType:
+		signer := ethtypes.NewEIP155Signer(chainID)
+		sender, err = ethtypes.Sender(signer, transaction)
+		if err != nil {
+			return common.Address{}, fmt.Errorf("error while getting tx sender: %v", err)
+		}
+	case ethtypes.AccessListTxType:
+		signer := ethtypes.NewEIP2930Signer(chainID)
+		sender, err = ethtypes.Sender(signer, transaction)
+		if err != nil {
+			return common.Address{}, fmt.Errorf("error while getting tx sender: %v", err)
+		}
+	case ethtypes.DynamicFeeTxType:
+		signer := ethtypes.NewLondonSigner(chainID)
+		sender, err = ethtypes.Sender(signer, transaction)
+		if err != nil {
+			return common.Address{}, fmt.Errorf("error while getting tx sender: %v", err)
+		}
+	case ethtypes.BlobTxType:
+		signer := ethtypes.NewCancunSigner(chainID)
+		sender, err = ethtypes.Sender(signer, transaction)
+		if err != nil {
+			return common.Address{}, fmt.Errorf("error while getting tx sender: %v", err)
+		}
+	default:
+		fmt.Printf("\nerror: unsupported transaction type %v", transaction.Type())
+	}
+
+	return sender, nil
 }
