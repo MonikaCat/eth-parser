@@ -16,27 +16,27 @@ import (
 var USDCAddress = common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 
 // GetTransaction queries transaction by hash and parse it's details
-func (n *Node) GetTransaction(tx *ethtypes.Transaction, db database.Database) types.Transaction {
+func (n *Node) GetTransaction(tx *ethtypes.Transaction, db database.Database) (types.Transaction, error) {
 
 	transaction, isPending, err := n.client.TransactionByHash(context.Background(), tx.Hash())
 
 	if err != nil {
-		fmt.Println("error while getting transaction %s: error: %v ", tx.Hash().String(), err)
+		return types.Transaction{}, fmt.Errorf("error while getting transaction %s: error: %v ", tx.Hash().String(), err)
 	}
 
 	if !isPending {
 		usdcTransferTx, err := n.ParseTransactionDetails(1, transaction, db)
 		if err != nil {
-			fmt.Println("error while parsing transaction details: %v", err)
+			return types.Transaction{}, fmt.Errorf("error while parsing transaction details: %v", err)
 		}
 
-		return usdcTransferTx
+		return usdcTransferTx, nil
 	}
 
 	fmt.Printf("\n TRANSACTION DETAILS %v \n", transaction)
 	fmt.Printf("\n IS PENDING %v \n", isPending)
 
-	return types.Transaction{}
+	return types.Transaction{}, nil
 }
 
 // ParseTransactionDetails parses transaction details
@@ -97,11 +97,6 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 			BigIntToHex(s),
 			Uint64ToHex(uint64(rune(yParity))),
 		)
-
-		err = db.SaveTransaction(txDetails)
-		if err != nil {
-			fmt.Errorf("error while saving transaction: %v", err)
-		}
 
 		return txDetails, nil
 
