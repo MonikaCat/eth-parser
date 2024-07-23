@@ -12,26 +12,26 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
-func (n *Node) GetBlock(blockNumber big.Int) (types.Block, error) {
+func (n *Node) GetBlock(blockNumber big.Int) (types.Block, ethtypes.Transactions, error) {
 
 	block, err := n.client.BlockByNumber(context.Background(), &blockNumber)
 	if err != nil {
-		return types.Block{}, fmt.Errorf("error while getting block %d: error: %v ", blockNumber, err)
+		return types.Block{}, ethtypes.Transactions{}, fmt.Errorf("error while getting block %d: error: %v ", blockNumber, err)
 	}
 
-	blockDetails, err := n.ParseBlockDetails(block)
+	blockDetails, txs, err := n.ParseBlockDetails(block)
 	if err != nil {
-		return types.Block{}, fmt.Errorf("error while parsing block details: %v", err)
+		return types.Block{}, ethtypes.Transactions{}, fmt.Errorf("error while parsing block details: %v", err)
 	}
 
-	return blockDetails, nil
+	return blockDetails, txs, nil
 }
 
-func (n *Node) ParseBlockDetails(block *ethtypes.Block) (types.Block, error) {
+func (n *Node) ParseBlockDetails(block *ethtypes.Block) (types.Block, ethtypes.Transactions, error) {
 
 	logsBloomJson, err := json.Marshal(block.Bloom())
 	if err != nil {
-		return types.Block{}, fmt.Errorf("error marshalling logsBloom: %v", err)
+		return types.Block{}, ethtypes.Transactions{}, fmt.Errorf("error marshalling logsBloom: %v", err)
 	}
 
 	blockDetails := types.Block{
@@ -58,5 +58,5 @@ func (n *Node) ParseBlockDetails(block *ethtypes.Block) (types.Block, error) {
 		TotalDifficulty:       "0",
 	}
 
-	return blockDetails, nil
+	return blockDetails, block.Transactions(), nil
 }
