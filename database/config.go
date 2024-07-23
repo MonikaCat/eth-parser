@@ -13,3 +13,11 @@ func NewDatabaseConfig(dns string, maxOpen, maxIdle int) DatabaseConfig {
 		MaxIdleConnections: maxIdle,
 	}
 }
+
+func DefaultDatabaseConfig() *DatabaseConfig {
+	return &DatabaseConfig{
+		DNS:                "test.db",
+		MaxOpenConnections: 20,
+		MaxIdleConnections: 10,
+	}
+}
