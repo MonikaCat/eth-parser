@@ -7,6 +7,7 @@ import (
 
 	initcmd "github.com/MonikaCat/eth-parser/cmd/init"
 	parsecmd "github.com/MonikaCat/eth-parser/cmd/parse"
+	preparecmd "github.com/MonikaCat/eth-parser/cmd/prepare"
 	versioncmd "github.com/MonikaCat/eth-parser/cmd/version"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +25,7 @@ func Runner(config *Config) *cobra.Command {
 	rootCmd.AddCommand(
 		initcmd.InitCmd(config.GetInitConfig()),
 		parsecmd.ParseCmd(config.config, config.GetName()),
+		preparecmd.PrepareDatabaseCmd(config.config, config.GetName()),
 		versioncmd.VersionCmd(),
 	)
 

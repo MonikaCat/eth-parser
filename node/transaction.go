@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/MonikaCat/eth-parser/types"
@@ -15,16 +16,17 @@ import (
 var USDCAddress = common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 
 // GetTransaction queries transaction by hash and parse it's details
-func (n *Node) GetTransaction(tx *ethtypes.Transaction) (types.Transaction, error) {
+func (n *Node) GetTransaction(blockNumber int64, tx *ethtypes.Transaction) (types.Transaction, error) {
 
+	// get the transaction details by tx hash
 	transaction, isPending, err := n.client.TransactionByHash(context.Background(), tx.Hash())
-
 	if err != nil {
 		return types.Transaction{}, fmt.Errorf("error while getting transaction %s: error: %v ", tx.Hash().String(), err)
 	}
 
+	// handle if the transaction is not pending
 	if !isPending {
-		usdcTransferTx, err := n.ParseTransactionDetails(1, transaction)
+		usdcTransferTx, err := n.ParseTransactionDetails(blockNumber, transaction)
 		if err != nil {
 			return types.Transaction{}, fmt.Errorf("error while parsing transaction details: %v", err)
 		}
@@ -32,30 +34,30 @@ func (n *Node) GetTransaction(tx *ethtypes.Transaction) (types.Transaction, erro
 		return usdcTransferTx, nil
 	}
 
-	fmt.Printf("\n TRANSACTION DETAILS %v \n", transaction)
-	fmt.Printf("\n IS PENDING %v \n", isPending)
-
 	return types.Transaction{}, nil
 }
 
 // ParseTransactionDetails parses transaction details
 func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.Transaction) (types.Transaction, error) {
 
-	if transaction.To() == nil || strings.ToLower(transaction.To().Hex()) != USDCAddress.Hex() {
+	// check if the transaction receipient is a USDC address
+	if transaction.To() == nil || transaction.To().Hex() != USDCAddress.Hex() {
 		return types.Transaction{}, nil
 	}
 
+	// get the transaction receipt
 	txReceipt, err := n.client.TransactionReceipt(n.ctx, transaction.Hash())
 	if err != nil {
 		return types.Transaction{}, fmt.Errorf("error while getting transaction receipt: %v", err)
 	}
-
-	if len(transaction.Data()) >= 10 && string(transaction.Data()[:10]) == "0xa9059cbb" {
+	// check if the transaction is a USDC transfer
+	if len(transaction.Data()) >= 10 && strings.HasPrefix(common.Bytes2Hex(transaction.Data()[:4]), "a9059cbb") {
 		var transferTo common.Address
 
+		// parse the transferTo and value
 		data := transaction.Data()[10:]
 		transferTo.SetBytes(data[:32])
-		// value := new(big.Int).SetBytes(data[32:])
+		value := new(big.Int).SetBytes(data[32:])
 
 		// parse the sender
 		txFrom, err := n.parseSender(transaction)
@@ -63,25 +65,28 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 			return types.Transaction{}, fmt.Errorf("error while parsing sender: %v", err)
 		}
 
+		// marshal the access list
 		accessListJSON, err := json.Marshal(transaction.AccessList())
 		if err != nil {
 			return types.Transaction{}, fmt.Errorf("error marshalling logsBloom: %v", err)
 		}
 
+		// get the raw signature values
 		v, r, s := transaction.RawSignatureValues()
 		var yParity int
 		if v.BitLen() > 0 {
 			yParity = int(v.Uint64() % 2)
 		}
 
+		// create a new transaction details
 		txDetails := types.NewTransaction(
-			fmt.Sprint(blockNumber),
+			BigIntToHex(big.NewInt(blockNumber)),
 			txReceipt.BlockHash.String(),
 			txFrom.String(),
 			transferTo.String(),
 			transaction.Hash().String(),
 			Uint64ToHex(uint64(txReceipt.TransactionIndex)),
-			BigIntToHex(transaction.Value()),
+			BigIntToHex(value),
 			Uint64ToHex(uint64(transaction.Type())),
 			BigIntToHex(transaction.ChainId()),
 			Uint64ToHex(transaction.Gas()),

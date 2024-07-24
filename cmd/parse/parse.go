@@ -34,23 +34,27 @@ func ParseCmd(cfg *config.Config, appName string) *cobra.Command {
 // when the parse command is executed
 func parse(cfg *config.Config, blockHeight int64) error {
 
+	// create a new parser config
 	parser, err := NewParserConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to create parser config")
 	}
 
+	// get block details and transactions
 	block, txs, err := parser.Node.GetBlock(*big.NewInt(blockHeight))
 	if err != nil {
 		return fmt.Errorf("failed to get block: %s", err)
 	}
 
+	// save block inside the database
 	err = parser.Database.SaveBlock(block)
 	if err != nil {
 		return fmt.Errorf("error while saving block: %v", err)
 	}
 
+	// parse and save transactions inside the database
 	for _, tx := range txs {
-		tx, err := parser.Node.GetTransaction(tx)
+		tx, err := parser.Node.GetTransaction(blockHeight, tx)
 		if err != nil {
 			return fmt.Errorf("error while getting transaction: %v", err)
 		}

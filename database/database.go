@@ -1,10 +1,14 @@
 package database
 
 import (
+	_ "embed"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
+
+//go:embed sql/schema.sql
+var createSchemaQuery string
 
 // Database represents the database connection
 type Database struct {
@@ -26,4 +30,13 @@ func ConnectToDatabase(cfg DatabaseConfig) (*Database, error) {
 	}
 
 	return &Database{SQL: db}, nil
+}
+
+func (db *Database) PrepareDatabaseTables(cfg DatabaseConfig) error {
+	_, err := db.SQL.Exec(createSchemaQuery)
+	if err != nil {
+		return fmt.Errorf("error while creating database tables: %v", err)
+	}
+
+	return nil
 }
