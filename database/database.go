@@ -32,7 +32,7 @@ func ConnectToDatabase(cfg DatabaseConfig) (*Database, error) {
 	return &Database{SQL: db}, nil
 }
 
-func (db *Database) PrepareDatabaseTables(cfg DatabaseConfig) error {
+func (db *Database) PrepareDatabaseTables() error {
 	_, err := db.SQL.Exec(createSchemaQuery)
 	if err != nil {
 		return fmt.Errorf("error while creating database tables: %v", err)

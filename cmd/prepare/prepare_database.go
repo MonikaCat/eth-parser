@@ -11,10 +11,10 @@ import (
 // PrepareDatabaseCmd returns the command that allows to prepare database tables
 func PrepareDatabaseCmd(cfg *config.Config, appName string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prepare-database",
-		Short: "Prepare database and create required tables",
+		Use:     "prepare-database",
+		Short:   "Prepare database and create required tables",
 		PreRunE: config.GetConfigPreRunE(cfg, appName),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			// create a new parser config
 			parser, err := parse.NewParserConfig(cfg)
 			if err != nil {
@@ -22,7 +22,7 @@ func PrepareDatabaseCmd(cfg *config.Config, appName string) *cobra.Command {
 			}
 
 			// prepare the database tables
-			err = parser.Database.PrepareDatabaseTables(cfg.Database)
+			err = parser.Database.PrepareDatabaseTables()
 			if err != nil {
 				return fmt.Errorf("error while preparing the database tables: %v", err)
 			}
