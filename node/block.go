@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/MonikaCat/eth-parser/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -33,34 +32,66 @@ func (n *Node) GetBlock(blockNumber big.Int) (types.Block, ethtypes.Transactions
 // it returns block details, transactions and error
 func (n *Node) ParseBlockDetails(block *ethtypes.Block) (types.Block, ethtypes.Transactions, error) {
 
+	// marshal the logsBloom
 	logsBloomJSON, err := json.Marshal(block.Bloom())
 	if err != nil {
 		return types.Block{}, ethtypes.Transactions{}, fmt.Errorf("error marshalling logsBloom: %v", err)
 	}
 
-	blockDetails := types.Block{
-		BlockNumber:           block.Number().Int64(),
-		BlockHash:             block.Hash().String(),
-		Miner:                 block.Coinbase().String(),
-		BaseFeePerGas:         block.BaseFee(),
-		BlobGasUsed:           block.GasUsed(),
-		Difficulty:            block.Difficulty().Uint64(),
-		ExcessBlobGas:         *block.ExcessBlobGas(),
-		ExtraData:             hex.EncodeToString(block.Extra()),
-		GasLimit:              block.GasLimit(),
-		GasUsed:               block.GasUsed(),
-		LogsBloom:             string(logsBloomJSON),
-		MixHash:               block.MixDigest().String(),
-		Nonce:                 block.Nonce(),
-		ParentBeaconBlockRoot: block.BeaconRoot().String(),
-		ParentHash:            block.ParentHash().String(),
-		ReceiptsRoot:          block.ReceiptHash().String(),
-		Sha3Uncles:            block.UncleHash().String(),
-		BlockSize:             block.Size(),
-		StateRoot:             block.Root().String(),
-		Timestamp:             time.Unix(int64(block.Time()), 0),
-		TotalDifficulty:       "0",
+	// parse the total difficulty of the block
+	totalDifficulty, err := n.parseTotalDifficulty(block.Number())
+	if err != nil {
+		return types.Block{}, ethtypes.Transactions{}, fmt.Errorf("error parsing total difficulty: %v", err)
 	}
 
+	// create a new block details
+	blockDetails := types.NewBlock(
+		BigIntToHex(block.Number()),
+		block.Hash().String(),
+		block.Coinbase().String(),
+		BigIntToHex(block.BaseFee()),
+		Uint64ToHex(*block.BlobGasUsed()),
+		BigIntToHex(block.Difficulty()),
+		Uint64ToHex(*block.ExcessBlobGas()),
+		StringToHex(hex.EncodeToString(block.Extra())),
+		Uint64ToHex(block.GasLimit()),
+		Uint64ToHex(block.GasUsed()),
+		string(logsBloomJSON),
+		block.MixDigest().String(),
+		Uint64ToHex(block.Nonce()),
+		block.BeaconRoot().String(),
+		block.ParentHash().String(),
+		block.ReceiptHash().String(),
+		block.UncleHash().String(),
+		Uint64ToHex(block.Size()),
+		block.Root().String(),
+		Uint64ToHex(block.Time()),
+		BigIntToHex(totalDifficulty),
+	)
+
 	return blockDetails, block.Transactions(), nil
+}
+
+// parseTotalDifficulty calls the RPC endpoint
+// and parses the total difficulty of the block
+func (n *Node) parseTotalDifficulty(blockNumber *big.Int) (*big.Int, error) {
+	var results map[string]interface{}
+	// get the total difficulty of the block
+	err := n.rpc.CallContext(n.ctx, &results, "eth_getBlockByNumber", fmt.Sprintf("0x%x", blockNumber), false)
+	if err != nil {
+		return nil, fmt.Errorf("error getting block from rpc: error: %v", err)
+	}
+
+	// get the total difficulty from the results
+	totalDiff, ok := results["totalDifficulty"].(string)
+	if !ok {
+		return nil, fmt.Errorf("error while getting block total difficulty")
+	}
+
+	// convert the total difficulty to a big int
+	totalDifficulty := new(big.Int)
+	// remove the 0x prefix
+	totalDifficulty.SetString(totalDiff[2:], 16)
+
+	return totalDifficulty, nil
 }

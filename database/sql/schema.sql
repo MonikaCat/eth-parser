@@ -1,7 +1,9 @@
+PRAGMA foreign_keys = ON;
+
 ----------------------------------------------
 --                BLOCK                     --
 ----------------------------------------------
-CREATE TABLE block(
+CREATE TABLE IF NOT EXISTS block(
     block_number                TEXT PRIMARY KEY UNIQUE,
     block_hash                  TEXT NOT NULL UNIQUE,
     parent_hash                 TEXT NOT NULL,
@@ -22,19 +24,17 @@ CREATE TABLE block(
     block_size                  TEXT NOT NULL,
     state_root                  TEXT NOT NULL,
     timestamp                   TEXT NOT NULL,
-    total_difficulty            TEXT NOT NULL,
-    transactions                TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
-    withdrawals                 JSONB NOT NULL DEFAULT '[]'::JSONB
+    total_difficulty            TEXT NOT NULL
 );
-CREATE INDEX block_number_index ON block(block_number);
-CREATE INDEX block_miner_index ON block(miner);
+CREATE INDEX IF NOT EXISTS block_number_index ON block(block_number);
+CREATE INDEX IF NOT EXISTS block_miner_index ON block(miner);
 
 ----------------------------------------------
---             TRANSACTION                  --
+--             TRANSACTIONS                 --
 ----------------------------------------------
-CREATE TABLE transaction(
-    block_number                TEXT NOT NULL REFERENCES block (block_number),
-    block_hash                  TEXT NOT NULL REFERENCES block (block_hash),
+CREATE TABLE IF NOT EXISTS transactions(
+    block_number                TEXT NOT NULL,
+    block_hash                  TEXT NOT NULL,
     tx_from                     TEXT NOT NULL,
     tx_to                       TEXT NOT NULL,
     transaction_hash            TEXT NOT NULL UNIQUE,
@@ -54,9 +54,11 @@ CREATE TABLE transaction(
     s                           TEXT NOT NULL,
     y_parity                    TEXT NOT NULL,
 
-    CONSTRAINT unique_transaction UNIQUE (transaction_hash, transaction_index) 
+    CONSTRAINT unique_transaction UNIQUE (transaction_hash, transaction_index),
+    FOREIGN KEY (block_number) REFERENCES block(block_number),
+    FOREIGN KEY (block_hash) REFERENCES block(block_hash)
 );
-CREATE INDEX transaction_hash_index ON transaction(transaction_hash);
-CREATE INDEX transaction_block_number_index ON transaction(block_number);
-CREATE INDEX transaction_from_index ON transaction(tx_from);
-CREATE INDEX transaction_to_index ON transaction(tx_to);
+CREATE INDEX IF NOT EXISTS transaction_hash_index ON transactions(transaction_hash);
+CREATE INDEX IF NOT EXISTS transaction_block_number_index ON transactions(block_number);
+CREATE INDEX IF NOT EXISTS transaction_from_index ON transactions(tx_from);
+CREATE INDEX IF NOT EXISTS transaction_to_index ON transactions(tx_to);

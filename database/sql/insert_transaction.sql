@@ -1,4 +1,4 @@
-INSERT INTO transaction (
+INSERT INTO transactions (
     block_number, block_hash,
     tx_from, tx_to, transaction_hash, 
     transaction_index, tx_value, tx_type, 
