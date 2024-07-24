@@ -9,8 +9,10 @@ import (
 	"strings"
 
 	"github.com/MonikaCat/eth-parser/types"
+	"github.com/MonikaCat/eth-parser/utils"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/sirupsen/logrus"
 )
 
 var USDCAddress = common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
@@ -39,6 +41,11 @@ func (n *Node) GetTransaction(blockNumber int64, tx *ethtypes.Transaction) (type
 
 // ParseTransactionDetails parses transaction details
 func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.Transaction) (types.Transaction, error) {
+	// log the processing of the transaction
+	n.logger.WithFields(logrus.Fields{
+		"block":   blockNumber,
+		"tx hash": transaction.Hash().String(),
+	}).Debug(utils.ProcessingTx)
 
 	// check if the transaction receipient is a USDC address
 	if transaction.To() == nil || transaction.To().Hex() != USDCAddress.Hex() {

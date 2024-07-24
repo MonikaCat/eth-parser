@@ -8,7 +8,9 @@ import (
 	"math/big"
 
 	"github.com/MonikaCat/eth-parser/types"
+	"github.com/MonikaCat/eth-parser/utils"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/sirupsen/logrus"
 )
 
 // GetBlock queries block by number
@@ -31,6 +33,10 @@ func (n *Node) GetBlock(blockNumber big.Int) (types.Block, ethtypes.Transactions
 // ParseBlockDetails parses block details
 // it returns block details, transactions and error
 func (n *Node) ParseBlockDetails(block *ethtypes.Block) (types.Block, ethtypes.Transactions, error) {
+	// log the processing of the block
+	n.logger.WithFields(logrus.Fields{
+		"block": BigIntToHex(block.Number()),
+	}).Info(utils.ProcessingBlock)
 
 	// marshal the logsBloom
 	logsBloomJSON, err := json.Marshal(block.Bloom())
