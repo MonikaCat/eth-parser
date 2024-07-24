@@ -1,0 +1,1 @@
+SELECT * FROM transaction WHERE block_number = $1;
