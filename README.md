@@ -56,7 +56,6 @@ database:
   dns: /Users/test/test.db          # Update value to your SQLite DNS
   max_open_connections: 20
   max_idle_connections: 10
-workers: 5
 ```
 
 ### Prepare Database:

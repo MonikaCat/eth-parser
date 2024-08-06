@@ -75,7 +75,7 @@ func (n *Node) ParseTransactionDetails(blockNumber int64, transaction *ethtypes.
 		// marshal the access list
 		accessListJSON, err := json.Marshal(transaction.AccessList())
 		if err != nil {
-			return types.Transaction{}, fmt.Errorf("error marshalling logsBloom: %v", err)
+			return types.Transaction{}, fmt.Errorf("error marshalling access list: %v", err)
 		}
 
 		// get the raw signature values
